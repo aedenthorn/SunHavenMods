@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TimeSpeed
+namespace MovementSpeed
 {
     public class Class1
     {

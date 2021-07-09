@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnimationSpeed", "Animation
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeSpeed", "TimeSpeed\TimeSpeed.csproj", "{6CC07CF2-8C6B-400F-913D-C2CDF59BFB2A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MovementSpeed", "MovementSpeed\MovementSpeed.csproj", "{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6CC07CF2-8C6B-400F-913D-C2CDF59BFB2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CC07CF2-8C6B-400F-913D-C2CDF59BFB2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CC07CF2-8C6B-400F-913D-C2CDF59BFB2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,15 +1,13 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
-using System;
 using System.Reflection;
 using UnityEngine;
 using Wish;
-using AnimationClip = Wish.AnimationClip;
 
-namespace DevTools
+namespace AnimationSpeed
 {
-    [BepInPlugin("aedenthorn.AnimationSpeed", "Animation Speed", "0.1.0")]
+    [BepInPlugin("aedenthorn.AnimationSpeed", "Animation Speed", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -49,6 +47,9 @@ namespace DevTools
         {
             static void Postfix(WeaponType ____weaponType, ref float __result)
             {
+                if (!modEnabled.Value)
+                    return;
+
                 //Dbgl($"Type: {____weaponType} rate: {____frameRate}");
                 switch (____weaponType)
                 {
