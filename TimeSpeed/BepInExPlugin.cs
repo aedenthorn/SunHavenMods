@@ -8,13 +8,15 @@ using Wish;
 
 namespace TimeSpeed
 {
-    [BepInPlugin("aedenthorn.TimeSpeed", "Time Speed", "0.1.1")]
+    [BepInPlugin("aedenthorn.TimeSpeed", "Time Speed", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
+        public static ConfigEntry<bool> pauseDuringDialogue;
+        public static ConfigEntry<bool> pauseWhenUIOpen;
         public static ConfigEntry<bool> showNotifications;
         public static ConfigEntry<float> timeSpeed;
         public static ConfigEntry<string> hotKeySpeedIncrease;
@@ -24,6 +26,14 @@ namespace TimeSpeed
         public static ConfigEntry<string> hotKeyRewindTime;
         public static ConfigEntry<string> hotKeyAdvanceTime;
         public static ConfigEntry<string> hotKeyModKey;
+
+        public static GameObject cookingUI;
+        public static GameObject inventoryUI;
+        public static GameObject craftingTableUI;
+        public static GameObject externalUI;
+        public static GameObject wishBottleUI;
+        public static GameObject dialoguePanel;
+
         //public static ConfigEntry<int> nexusID;
 
         public static float lastSpeed = 60;
@@ -39,8 +49,12 @@ namespace TimeSpeed
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            
             showNotifications = Config.Bind<bool>("Options", "ShowNotifications", true, "Show notifications when changing time speed.");
+            pauseDuringDialogue = Config.Bind<bool>("Options", "PauseDuringDialogue", true, "Pause time during dialogue.");
+            pauseWhenUIOpen = Config.Bind<bool>("Options", "PauseWhenUIOpen", true, "Pause time when any UI interface is open.");
             timeSpeed = Config.Bind<float>("Options", "TimeSpeed", 60, "Speed multiplier.");
+
             hotKeySpeedDecrease = Config.Bind<string>("HotKeys", "SpeedDecrease", "[-]", "Hotkey to decrease time speed. Use https://docs.unity3d.com/Manual/class-InputManager.html");
             hotKeySpeedIncrease = Config.Bind<string>("HotKeys", "SpeedIncrease", "[+]", "Hotkey to increase time speed. Use https://docs.unity3d.com/Manual/class-InputManager.html");
             hotKeySpeedReset = Config.Bind<string>("HotKeys", "SpeedReset", "[/]", "Hotkey to reset time speed to 1x. Use https://docs.unity3d.com/Manual/class-InputManager.html");
@@ -55,6 +69,33 @@ namespace TimeSpeed
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
         }
 
+        [HarmonyPatch(typeof(UIHandler), nameof(UIHandler.Initialize))]
+        static class UIHandler_Initialize_Patch
+        {
+            static void Postfix(GameObject ____cookingUI, GameObject ____inventoryUI, GameObject ____craftingTableUI, GameObject ____externalUI, GameObject ____wishBottle)
+            {
+                if (!modEnabled.Value)
+                    return;
+                cookingUI = ____cookingUI;
+                inventoryUI = ____inventoryUI;
+                craftingTableUI = ____craftingTableUI;
+                externalUI = ____externalUI;
+                wishBottleUI = ____wishBottle;
+            }
+        }
+        
+        [HarmonyPatch(typeof(DialogueController), nameof(DialogueController.Initialize))]
+        static class DialogueController_Initialize_Patch
+        {
+            static void Postfix()
+            {
+                if (!modEnabled.Value)
+                    return;
+                dialoguePanel = (GameObject)AccessTools.Field(typeof(DialogueController), "_dialoguePanel").GetValue(DialogueController.Instance);
+            }
+        }
+
+
         [HarmonyPatch(typeof(PlaySettings), "daySpeed")]
         [HarmonyPatch(MethodType.Getter)]
         static class daySpeed_Get_Patch
@@ -64,11 +105,28 @@ namespace TimeSpeed
                 if (!modEnabled.Value)
                     return true;
 
-                __result = timeSpeed.Value;
+
+                if (pauseDuringDialogue.Value && dialoguePanel?.activeSelf == true)
+                    __result = 0f;
+                else if (pauseWhenUIOpen.Value && 
+                        (
+                            cookingUI?.activeSelf == true
+                            ||
+                            inventoryUI?.activeSelf == true
+                            ||
+                            craftingTableUI?.activeSelf == true
+                            ||
+                            externalUI?.activeSelf == true
+                        )
+                    )
+                    __result = 0f;
+                else
+                    __result = timeSpeed.Value;
 
                 return false;
             }
         }
+        
         [HarmonyPatch(typeof(Player), "Update")]
         static class Player_Update_Patch
         {
@@ -76,6 +134,7 @@ namespace TimeSpeed
             {
                 if (!modEnabled.Value)
                     return;
+
                 if (AedenthornUtils.CheckKeyDown(hotKeyRewindTime.Value))
                 {
                     DateTime time = SingletonBehaviour<DayCycle>.Instance.Time;
