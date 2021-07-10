@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeSpeed", "TimeSpeed\Time
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MovementSpeed", "MovementSpeed\MovementSpeed.csproj", "{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpOver", "JumpOver\JumpOver.csproj", "{F80691A5-0503-4FBB-86DD-896384FFABCB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CharacterEdit", "CharacterEdit\CharacterEdit.csproj", "{43F3AEF4-1A98-4DF2-84BD-97AB5FDC5CB6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D0F83F1-56EA-4C93-96D8-EA4F468DDA5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F80691A5-0503-4FBB-86DD-896384FFABCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F80691A5-0503-4FBB-86DD-896384FFABCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F80691A5-0503-4FBB-86DD-896384FFABCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F80691A5-0503-4FBB-86DD-896384FFABCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43F3AEF4-1A98-4DF2-84BD-97AB5FDC5CB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43F3AEF4-1A98-4DF2-84BD-97AB5FDC5CB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43F3AEF4-1A98-4DF2-84BD-97AB5FDC5CB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43F3AEF4-1A98-4DF2-84BD-97AB5FDC5CB6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
