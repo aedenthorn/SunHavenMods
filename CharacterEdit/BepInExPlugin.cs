@@ -77,6 +77,7 @@ namespace CharacterEdit
                     SingletonBehaviour<GameSave>.Instance.LoadCharacter(index);
                     MainMenuController.Instance.EnableMenu(MainMenuController.Instance.newCharacterMenu);
                     SetupCharacter();
+                    MainMenuController.Instance.backCharacterButton.onClick.AddListener(SetupButtons);
                     MainMenuController.Instance.confirmCharacterButton.onClick.RemoveAllListeners();
                     MainMenuController.Instance.confirmCharacterButton.onClick.AddListener(delegate ()
                     {
@@ -114,6 +115,12 @@ namespace CharacterEdit
             }
 
             yield break;
+        }
+
+        private static void SetupButtons()
+        {
+            MainMenuController.Instance.SetupButtons();
+            MainMenuController.Instance.backCharacterButton.onClick.RemoveListener(SetupButtons);
         }
 
         private static void SetupCharacter()
