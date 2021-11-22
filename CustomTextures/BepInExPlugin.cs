@@ -1,17 +1,16 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using Wish;
 
 namespace CustomTextures
 {
-    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.1.0")]
+    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -45,8 +44,14 @@ namespace CustomTextures
             string path = AedenthornUtils.GetAssetPath(this, true);
             foreach(string file in Directory.GetFiles(path, "*.png", SearchOption.AllDirectories))
             {
-                Texture2D tex = new Texture2D(1, 1);
+                TextureCreationFlags flags = new TextureCreationFlags();
+                Texture2D tex = new Texture2D(1, 1, GraphicsFormat.R8G8B8A8_UNorm, flags);
                 tex.LoadImage(File.ReadAllBytes(file));
+                tex.filterMode = FilterMode.Point;
+                tex.wrapMode = TextureWrapMode.Clamp;
+                tex.wrapModeU = TextureWrapMode.Clamp;
+                tex.wrapModeV = TextureWrapMode.Clamp;
+                tex.wrapModeW = TextureWrapMode.Clamp;
                 customTextureDict.Add(Path.GetFileNameWithoutExtension(file), tex);
             }
             Dbgl($"Loaded {customTextureDict.Count} textures");
@@ -57,23 +62,25 @@ namespace CustomTextures
         {
             static void Prefix()
             {
-                foreach (ClothingLayerData cld in CharacterClothingStyles.allClothing)
+                foreach (ClothingLayerData cld in CharacterClothingStyles.AllClothing)
                 {
                     foreach (ClothingLayerInfo cli in cld.ClotherLayerInfo)
                     {
                         for(int i = 0; i < cli.sprites.Length; i++)
                         {
-                            if (cli.sprites[i] && customTextureDict.ContainsKey(Regex.Replace(cli.sprites[i].name, "_[0-9]+$","")))
+                            if (cli.sprites[i] && customTextureDict.ContainsKey(cli.sprites[i].texture.name))
                             {
-                                Dbgl($"replacing sprite {cli.sprites[i].name}");
+                                Dbgl($"replacing sprite {cli.clothingLayer} {cli.sprites[i].name}");
+                                customTextureDict[cli.sprites[i].texture.name].name = cli.sprites[i].texture.name;
                                 //File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), typeof(BepInExPlugin).Namespace, cli.sprites[i].name+".png"), cli.sprites[i].texture.EncodeToPNG());
-                                cli.sprites[i] = Sprite.Create(customTextureDict[Regex.Replace(cli.sprites[i].name, "_[0-9]+$", "")], cli.sprites[i].rect, new Vector2(cli.sprites[i].pivot.x / cli.sprites[i].rect.width, cli.sprites[i].pivot.y / cli.sprites[i].rect.height), cli.sprites[i].pixelsPerUnit);
+                                Sprite newSprite = Sprite.Create(customTextureDict[cli.sprites[i].texture.name], cli.sprites[i].rect, new Vector2(cli.sprites[i].pivot.x / cli.sprites[i].rect.width, cli.sprites[i].pivot.y / cli.sprites[i].rect.height), cli.sprites[i].pixelsPerUnit, 0, SpriteMeshType.FullRect, cli.sprites[i].border, true);
+                                newSprite.name = cli.sprites[i].name;
+                                cli.sprites[i] = newSprite;
                             }
                         }
                     }
                 }
             }
         }
-
     }
 }
