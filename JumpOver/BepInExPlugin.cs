@@ -39,18 +39,18 @@ namespace JumpOver
         [HarmonyPatch(typeof(Player), "Update")]
         static class Player_LateUpdate_Patch
         {
-            static void Postfix(Player __instance, Rigidbody2D ____rigidbody)
+            static void Postfix(Player __instance)
             {
                 if (!modEnabled.Value)
                     return;
 
-                if (!__instance.Grounded && ((airSkipOver.Value &&  __instance.AirSkipsUsed > 0) || (jumpOver.Value && __instance.AirSkipsUsed <= 0)))
+                if (!__instance.Grounded && ((airSkipOver.Value && __instance.AirSkipsUsed >= __instance.MaxAirSkips) || (jumpOver.Value && __instance.AirSkipsUsed < __instance.MaxAirSkips)))
                 {
-                    ____rigidbody.bodyType = RigidbodyType2D.Kinematic;
+                    __instance.rigidbody.bodyType = RigidbodyType2D.Kinematic;
                 }
                 else
                 {
-                    ____rigidbody.bodyType = RigidbodyType2D.Dynamic;
+                    __instance.rigidbody.bodyType = RigidbodyType2D.Dynamic;
                 }
             }
         }

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>$(ProjectName)</AssemblyName>
     <RootNamespace>$(ProjectName)</RootNamespace>
-    <TargetFramework>net480</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU</Platforms>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
@@ -215,6 +215,16 @@
     <Reference Include="UnityEngine.AssetBundleModule">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(UnityPath)\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="SunHaven.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\SunHaven.Core.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="SunHaven.External">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\SunHaven.External.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
