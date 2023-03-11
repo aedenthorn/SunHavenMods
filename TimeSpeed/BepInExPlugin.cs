@@ -8,7 +8,7 @@ using Wish;
 
 namespace TimeSpeed
 {
-    [BepInPlugin("aedenthorn.TimeSpeed", "Time Speed", "0.2.0")]
+    [BepInPlugin("aedenthorn.TimeSpeed", "Time Speed", "1.0.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -72,13 +72,11 @@ namespace TimeSpeed
         [HarmonyPatch(typeof(UIHandler), nameof(UIHandler.Initialize))]
         static class UIHandler_Initialize_Patch
         {
-            static void Postfix(GameObject ____cookingUI, GameObject ____inventoryUI, GameObject ____craftingTableUI, GameObject ____externalUI, GameObject ____wishBottle)
+            static void Postfix(GameObject ____inventoryUI, GameObject ____externalUI, GameObject ____wishBottle)
             {
                 if (!modEnabled.Value)
                     return;
-                cookingUI = ____cookingUI;
                 inventoryUI = ____inventoryUI;
-                craftingTableUI = ____craftingTableUI;
                 externalUI = ____externalUI;
                 wishBottleUI = ____wishBottle;
             }
