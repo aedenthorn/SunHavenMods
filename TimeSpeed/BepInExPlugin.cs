@@ -8,7 +8,7 @@ using Wish;
 
 namespace TimeSpeed
 {
-    [BepInPlugin("aedenthorn.TimeSpeed", "Time Speed", "1.0.0")]
+    [BepInPlugin("aedenthorn.TimeSpeed", "Time Speed", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

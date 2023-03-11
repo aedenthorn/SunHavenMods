@@ -8,7 +8,7 @@ using Wish;
 
 namespace MovementSpeed
 {
-    [BepInPlugin("aedenthorn.MovementSpeed", "Movement Speed", "1.0.0")]
+    [BepInPlugin("aedenthorn.MovementSpeed", "Movement Speed", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

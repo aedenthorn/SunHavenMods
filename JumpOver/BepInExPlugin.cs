@@ -7,7 +7,7 @@ using Wish;
 
 namespace JumpOver
 {
-    [BepInPlugin("aedenthorn.JumpOver", "Jump Over", "0.2.0")]
+    [BepInPlugin("aedenthorn.JumpOver", "Jump Over", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
