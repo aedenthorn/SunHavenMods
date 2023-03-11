@@ -13,7 +13,7 @@ using Wish;
 
 namespace CharacterEdit
 {
-    [BepInPlugin("aedenthorn.CharacterEdit", "Character Edit", "0.1.0")]
+    [BepInPlugin("aedenthorn.CharacterEdit", "Character Edit", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -59,13 +59,14 @@ namespace CharacterEdit
         {
             Dbgl($"fixing buttons");
             yield return new WaitForEndOfFrame();
-            Dbgl($"{characterSelectPanel.childCount}");
+            var panels = characterSelectPanel.GetComponentsInChildren<SavePanel>();
+            Dbgl($"{panels.Length}");
 
-            for (int i = 0; i < characterSelectPanel.childCount; i++)
+            for (int i = 0; i < panels.Length; i++)
             {
-                Dbgl($"{i}, {(i + 1)} of {characterSelectPanel.childCount}");
+                Dbgl($"{i}, {(i + 1)} of {panels.Length}");
                 int index = i;
-                SavePanel savePanel = characterSelectPanel.GetChild(index).GetComponent<SavePanel>();
+                SavePanel savePanel = panels[index];
                 GameObject button = Instantiate(savePanel.deleteButton.gameObject, savePanel.deleteButton.transform.parent);
                 button.GetComponent<RectTransform>().anchoredPosition -= new Vector2(savePanel.deleteButton.gameObject.GetComponent<RectTransform>().rect.width, 0);
                 button.transform.GetComponentInChildren<TextMeshProUGUI>().text = "Edit";
