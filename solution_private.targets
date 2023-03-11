@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <GamePath>G:\ga\Sun Haven</GamePath>
+    <GamePath>E:\Program Files (x86)\Steam\steamapps\common\Sun Haven</GamePath>
   </PropertyGroup>
 
 </Project>
