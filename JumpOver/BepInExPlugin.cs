@@ -7,7 +7,7 @@ using Wish;
 
 namespace JumpOver
 {
-    [BepInPlugin("aedenthorn.JumpOver", "Jump Over", "0.1.0")]
+    [BepInPlugin("aedenthorn.JumpOver", "Jump Over", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -44,7 +44,7 @@ namespace JumpOver
                 if (!modEnabled.Value)
                     return;
 
-                if (!__instance.Grounded && ((airSkipOver.Value &&  __instance.UsedAirSkip) || (jumpOver.Value && !__instance.UsedAirSkip)))
+                if (!__instance.Grounded && ((airSkipOver.Value &&  __instance.AirSkipsUsed > 0) || (jumpOver.Value && __instance.AirSkipsUsed <= 0)))
                 {
                     ____rigidbody.bodyType = RigidbodyType2D.Kinematic;
                 }
