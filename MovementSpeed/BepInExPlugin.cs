@@ -8,7 +8,7 @@ using Wish;
 
 namespace MovementSpeed
 {
-    [BepInPlugin("aedenthorn.MovementSpeed", "Movement Speed", "0.1.0")]
+    [BepInPlugin("aedenthorn.MovementSpeed", "Movement Speed", "1.0.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -62,6 +62,7 @@ namespace MovementSpeed
         }
 
         [HarmonyPatch(typeof(Player), "Update")]
+        [HarmonyPatch(MethodType.Normal)]
         static class Player_Update_Patch
         {
             static void Postfix()
