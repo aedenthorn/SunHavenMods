@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>$(ProjectName)</AssemblyName>
     <RootNamespace>$(ProjectName)</RootNamespace>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net480</TargetFramework>
     <Platforms>AnyCPU</Platforms>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
