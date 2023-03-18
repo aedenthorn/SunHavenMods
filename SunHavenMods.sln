@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31424.327
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnimationSpeed", "AnimationSpeed\AnimationSpeed.csproj", "{39D9A5BE-225E-47A0-B29C-39B4027A61C7}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomTextures", "CustomTextures\CustomTextures.csproj", "{E53C9C26-C408-4D7E-B1F1-8D80D40B4AAC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AedenthornUtils", "AedenthornUtils\AedenthornUtils.csproj", "{D67BA513-D1DA-42E9-B749-0E6C56ECEF2B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixes", "Fixes\Fixes.csproj", "{FDFF351F-CBDB-4306-95B4-7E50F3B0686A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{D67BA513-D1DA-42E9-B749-0E6C56ECEF2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D67BA513-D1DA-42E9-B749-0E6C56ECEF2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D67BA513-D1DA-42E9-B749-0E6C56ECEF2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDFF351F-CBDB-4306-95B4-7E50F3B0686A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDFF351F-CBDB-4306-95B4-7E50F3B0686A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDFF351F-CBDB-4306-95B4-7E50F3B0686A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDFF351F-CBDB-4306-95B4-7E50F3B0686A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

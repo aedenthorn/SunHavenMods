@@ -10,7 +10,7 @@ using Wish;
 
 namespace CustomTextures
 {
-    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.3.0")]
+    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -64,7 +64,7 @@ namespace CustomTextures
             {
                 foreach (ClothingLayerData cld in CharacterClothingStyles.AllClothing)
                 {
-                    foreach (ClothingLayerInfo cli in cld.ClotherLayerInfo)
+                    foreach (ClothingLayerInfo cli in cld.ClothingLayerInfo)
                     {
                         for(int i = 0; i < cli.sprites.Length; i++)
                         {

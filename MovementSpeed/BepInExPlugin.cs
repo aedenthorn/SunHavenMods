@@ -8,7 +8,7 @@ using Wish;
 
 namespace MovementSpeed
 {
-    [BepInPlugin("aedenthorn.MovementSpeed", "Movement Speed", "0.2.0")]
+    [BepInPlugin("aedenthorn.MovementSpeed", "Movement Speed", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -43,8 +43,6 @@ namespace MovementSpeed
             hotKeySpeedReset = Config.Bind<string>("HotKeys", "SpeedReset", "\\", "Hotkey to reset movement speed to 1x. Use https://docs.unity3d.com/Manual/class-InputManager.html");
             hotKeyModKey = Config.Bind<string>("HotKeys", "ModKey", "left ctrl", "Modifier key to decrease / increase movement speed by 0.1x. Use https://docs.unity3d.com/Manual/class-InputManager.html");
 
-            //nexusID = Config.Bind<int>("General", "NexusID", 1, "Nexus mod ID for updates");
-
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
         }
 
@@ -61,11 +59,10 @@ namespace MovementSpeed
             }
         }
 
-        [HarmonyPatch(typeof(Player), "Update")]
-        [HarmonyPatch(MethodType.Normal)]
+        [HarmonyPatch(typeof(PlayerInput), "Update")]
         static class Player_Update_Patch
         {
-            static void Postfix()
+            static void Prefix()
             {
                 if (!modEnabled.Value)
                     return;
