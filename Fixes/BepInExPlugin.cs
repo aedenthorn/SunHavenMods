@@ -76,6 +76,23 @@ namespace Fixes
                 return codes.AsEnumerable();
             }
         }
+        [HarmonyPatch(typeof(Platform), "LateUpdate")]
+        private static class Platform_LateUpdate_Patch
+        {
+            static void Prefix(Platform __instance, List<PlatformCollider> ___colliders)
+            {
+                if (!modEnabled.Value)
+                    return;
+
+                for(int i = ___colliders.Count - 1; i >= 0; i--)
+                {
+                    if (___colliders[i]?.collider == null)
+                    {
+                        ___colliders.RemoveAt(i);
+                    }
+                }
+            }
+        }
 
         private static DataTile GetDataTile(SerializedDataTile stile)
         {

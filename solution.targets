@@ -87,6 +87,11 @@
       <HintPath>$(UnityPath)\UnityEngine.AccessibilityModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Addressables">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\Unity.Addressables.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.AIModule">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(UnityPath)\UnityEngine.AIModule.dll</HintPath>
@@ -170,6 +175,11 @@
     <Reference Include="UnityEngine.ImageConversionModule">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(UnityPath)\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\Unity.ResourceManager.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TerrainModule">
