@@ -9,6 +9,8 @@ using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.UI;
 using Wish;
 
 namespace CharacterEdit
@@ -24,6 +26,7 @@ namespace CharacterEdit
 
         public static CharacterCreation characterCreation = null;
         private static string lastName;
+        private static Sprite buttonSprite;
 
         //public static ConfigEntry<int> nexusID;
 
@@ -41,79 +44,93 @@ namespace CharacterEdit
 
             hotKey = Config.Bind<string>("HotKeys", "HotKey", "y", "Hotkey to open character creation UI. Use https://docs.unity3d.com/Manual/class-InputManager.html");
 
+            LoadTexture();
+
             //nexusID = Config.Bind<int>("General", "NexusID", 1, "Nexus mod ID for updates");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
         }
 
-        [HarmonyPatch(typeof(LoadCharacterMenu), "SetupSavePanels")]
-        static class LoadCharacterMenu_SetupSavePanels_Patch
+        private static void LoadTexture()
         {
-            static void Postfix(Transform ____characterSelectPanel)
+            string path = Path.Combine(AedenthornUtils.GetAssetPath(context, true), "button.png");
+            if (!File.Exists(path))
             {
-                MainMenuController.Instance.StartCoroutine(FixButtons(____characterSelectPanel));
+                Dbgl($"Couldn't find file at {path}");
+                return;
+            }
+            TextureCreationFlags flags = new TextureCreationFlags();
+            Texture2D tex = new Texture2D(1, 1, GraphicsFormat.R8G8B8A8_UNorm, flags);
+            tex.LoadImage(File.ReadAllBytes(path));
+            tex.filterMode = FilterMode.Point;
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.wrapModeU = TextureWrapMode.Clamp;
+            tex.wrapModeV = TextureWrapMode.Clamp;
+            tex.wrapModeW = TextureWrapMode.Clamp;
+
+            buttonSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.zero);
+        }
+
+
+        [HarmonyPatch(typeof(SavePanel), nameof(SavePanel.SetPlayerImage))]
+        static class SavePanel_SetPlayerImage_Patch
+        {
+            static void Postfix(SavePanel __instance, CharacterData character)
+            {
+                MainMenuController.Instance.StartCoroutine(FixButtons(__instance, character));
             }
         }
 
-        private static IEnumerator FixButtons(Transform characterSelectPanel)
+        private static IEnumerator FixButtons(SavePanel savePanel, CharacterData character)
         {
-            Dbgl($"fixing buttons");
-            yield return new WaitForEndOfFrame();
-            var panels = characterSelectPanel.GetComponentsInChildren<SavePanel>();
-            Dbgl($"{panels.Length}");
-
-            for (int i = 0; i < panels.Length; i++)
+            int index = SingletonBehaviour<GameSave>.Instance.Saves.FindIndex(s => s.characterData == character);
+            Dbgl($"fixing panel {index}");
+            GameObject button = Instantiate(savePanel.deleteButton.gameObject, savePanel.deleteButton.transform.parent);
+            button.GetComponent<RectTransform>().anchoredPosition -= new Vector2(savePanel.deleteButton.gameObject.GetComponent<RectTransform>().rect.width, 0);
+            button.GetComponent<Image>().sprite = buttonSprite;
+            button.GetComponent<UnityEngine.UI.Button>().onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+            button.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(delegate ()
             {
-                Dbgl($"{i}, {(i + 1)} of {panels.Length}");
-                int index = i;
-                SavePanel savePanel = panels[index];
-                GameObject button = Instantiate(savePanel.deleteButton.gameObject, savePanel.deleteButton.transform.parent);
-                button.GetComponent<RectTransform>().anchoredPosition -= new Vector2(savePanel.deleteButton.gameObject.GetComponent<RectTransform>().rect.width, 0);
-                button.transform.GetComponentInChildren<TextMeshProUGUI>().text = "Edit";
-                button.GetComponent<UnityEngine.UI.Button>().onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
-                button.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(delegate ()
+
+                SingletonBehaviour<GameSave>.Instance.LoadCharacter(index);
+                MainMenuController.Instance.EnableMenu(MainMenuController.Instance.newCharacterMenu);
+                SetupCharacter();
+                MainMenuController.Instance.backCharacterButton.onClick.AddListener(SetupButtons);
+                MainMenuController.Instance.confirmCharacterButton.onClick.RemoveAllListeners();
+                MainMenuController.Instance.confirmCharacterButton.onClick.AddListener(delegate ()
                 {
-                    Dbgl($"clicked edit {index}");
-
-                    SingletonBehaviour<GameSave>.Instance.LoadCharacter(index);
-                    MainMenuController.Instance.EnableMenu(MainMenuController.Instance.newCharacterMenu);
-                    SetupCharacter();
-                    MainMenuController.Instance.backCharacterButton.onClick.AddListener(SetupButtons);
-                    MainMenuController.Instance.confirmCharacterButton.onClick.RemoveAllListeners();
-                    MainMenuController.Instance.confirmCharacterButton.onClick.AddListener(delegate ()
+                    Dictionary<ClothingLayer, ClothingLayerData> currentClothingDictionary = (Dictionary<ClothingLayer, ClothingLayerData>)AccessTools.Field(typeof(CharacterCreation), "currentClothingDictionary").GetValue(MainMenuController.Instance.characterCreation);
+                    foreach (ClothingLayer clothingLayer in (ClothingLayer[])Enum.GetValues(typeof(ClothingLayer)))
                     {
-                        Dictionary<ClothingLayer, ClothingLayerData> currentClothingDictionary = (Dictionary<ClothingLayer, ClothingLayerData>)AccessTools.Field(typeof(CharacterCreation), "currentClothingDictionary").GetValue(MainMenuController.Instance.characterCreation);
-                        foreach (ClothingLayerData clothingLayerData in currentClothingDictionary.Values.ToList())
+                        ClothingLayerData style = SingletonBehaviour<CharacterClothingStyles>.Instance.GetStyle(clothingLayer, MainMenuController.Instance.characterCreation.CurrentCharacter.styleData[(byte)clothingLayer]);
+                        if (style)
                         {
-                            if (clothingLayerData.armorData != null)
-                            {
-                                int vanityIndexByArmorType = PlayerInventory.GetVanityIndexByArmorType(clothingLayerData.armorData.armorType);
-                                MainMenuController.Instance.characterCreation.CurrentCharacter.Items[(short)vanityIndexByArmorType] = new InventoryItemData
-                                {
-                                    Amount = 1,
-                                    Item = clothingLayerData.armorData.GenerateArmorItem()
-                                };
-                                Debug.Log("Index" + vanityIndexByArmorType);
-                                ClothingLayer clothingLayer = clothingLayerData.ClotherLayerInfo[0].clothingLayer;
-                                MainMenuController.Instance.characterCreation.SetClothingLayerData(MainMenuController.Instance.characterCreation.defaultLayers[clothingLayer], clothingLayer, false);
-                            }
+                            Dbgl($"Setting: {clothingLayer}: {MainMenuController.Instance.characterCreation.CurrentCharacter.styleData[(byte)clothingLayer]}");
+                            currentClothingDictionary[clothingLayer] = style;
+                            MainMenuController.Instance.characterCreation.SetClothingLayerData(style, clothingLayer, false);
                         }
-                        SingletonBehaviour<GameSave>.Instance.WriteCharacterToFile(false, false);
-                        if (MainMenuController.Instance.characterCreation.CurrentCharacter.characterName != lastName)
-                        {
-                            Dbgl($"Name change, deleting old profile {lastName}");
+                    }
+                    foreach (ClothingLayer clothingLayer in (ClothingLayer[])Enum.GetValues(typeof(ClothingLayer)))
+                    {
+                        Dbgl($"After: {clothingLayer}: {MainMenuController.Instance.characterCreation.CurrentCharacter.styleData[(byte)clothingLayer]} {SingletonBehaviour<GameSave>.Instance.CurrentSave.characterData.styleData[(byte)clothingLayer]}");
+                    }
 
-                            string path = Path.Combine(Application.persistentDataPath, "Saves", lastName + ".save");
-                            if (File.Exists(path))
-                                File.Delete(path);
+                    SingletonBehaviour<GameSave>.Instance.CurrentSave.characterData = MainMenuController.Instance.characterCreation.CurrentCharacter;
+                    SingletonBehaviour<GameSave>.Instance.WriteCharacterToFile(false, false);
+                    if (MainMenuController.Instance.characterCreation.CurrentCharacter.characterName != lastName)
+                    {
+                        Dbgl($"Name change, deleting old profile {lastName}");
 
-                            SingletonBehaviour<GameSave>.Instance.LoadAllCharacters();
-                        }
-                        MainMenuController.Instance.EnableMenu(MainMenuController.Instance.homeMenu);
-                        MainMenuController.Instance.SetupButtons();
-                    });
+                        string path = Path.Combine(Application.persistentDataPath, "Saves", lastName + ".save");
+                        if (File.Exists(path))
+                            File.Delete(path);
+
+                        SingletonBehaviour<GameSave>.Instance.LoadAllCharacters();
+                    }
+                    MainMenuController.Instance.EnableMenu(MainMenuController.Instance.homeMenu);
+                    MainMenuController.Instance.SetupButtons();
                 });
-            }
+            });
 
             yield break;
         }
@@ -129,69 +146,23 @@ namespace CharacterEdit
             lastName = MainMenuController.Instance.characterCreation.CurrentCharacter.characterName;
             MainMenuController.Instance.characterCreation.nameInputField.text = lastName;
 
-            MainMenuController.Instance.characterCreation.SetRaceImages();
-            
             if(!MainMenuController.Instance.characterCreation.CurrentCharacter.male)
                 MainMenuController.Instance.characterCreation.SetFemale();
             else
                 MainMenuController.Instance.characterCreation.SetMale();
 
             Dictionary<ClothingLayer, ClothingLayerData> currentClothingDictionary = (Dictionary<ClothingLayer, ClothingLayerData>)AccessTools.Field(typeof(CharacterCreation), "currentClothingDictionary").GetValue(MainMenuController.Instance.characterCreation);
-
             foreach (ClothingLayer clothingLayer in (ClothingLayer[])Enum.GetValues(typeof(ClothingLayer)))
             {
-                ClothingLayerData style = SingletonBehaviour<CharacterClothingStyles>.Instance.GetStyle(clothingLayer, MainMenuController.Instance.characterCreation.CurrentCharacter.styleData[(byte)clothingLayer]);
+                Dbgl($"{clothingLayer}: {SingletonBehaviour<GameSave>.Instance.CurrentSave.characterData.styleData[(byte)clothingLayer]}");
+                ClothingLayerData style = SingletonBehaviour<CharacterClothingStyles>.Instance.GetStyle(clothingLayer, SingletonBehaviour<GameSave>.Instance.CurrentSave.characterData.styleData[(byte)clothingLayer]);
                 if (style)
                 {
-                    Dbgl($"Setting style for layer {clothingLayer} {style.menuName}");
                     currentClothingDictionary[clothingLayer] = style;
-                    MainMenuController.Instance.characterCreation.SetClothingLayerData(style, clothingLayer, true);
-                    MainMenuController.Instance.characterCreation.SetClothingColors(style, clothingLayer);
+                    MainMenuController.Instance.characterCreation.SetClothingLayerData(style, clothingLayer, false);
                 }
             }
-
-            MainMenuController.Instance.mainMenuPlayerController.InitializeAsMainMenuPlayer(MainMenuController.Instance.characterCreation.CurrentCharacter);
+            AccessTools.Method(typeof(CharacterCreation), "UpdateStartingItems").Invoke(MainMenuController.Instance.characterCreation, new object[0]);
         }
-
-
-        /*
-        public void SetupButtons()
-        {
-            this.confirmCharacterButton.onClick.RemoveAllListeners();
-            if (!GameManager.Multiplayer)
-            {
-                this.confirmCharacterButton.onClick.AddListener(delegate ()
-                {
-                    this.characterCreation.AddNewCharacter();
-                    this.PlayGame(SingletonBehaviour<GameSave>.Instance.Saves.Count - 1);
-                });
-                this.backCharacterButton.gameObject.SetActive(true);
-                return;
-            }
-            if (GameManager.Host)
-            {
-                this.confirmCharacterButton.onClick.AddListener(delegate ()
-                {
-                    this.characterCreation.AddNewCharacter();
-                    if (!NetworkManager.Instance)
-                    {
-                        if (this.platform == MultiplayerPlatform.Steam)
-                        {
-                            this.steamMenu.HostServer();
-                            return;
-                        }
-                        this.nativeMenu.HostServer();
-                    }
-                });
-                return;
-            }
-            this.confirmCharacterButton.onClick.AddListener(delegate ()
-            {
-                this.characterCreation.AddNewCharacter();
-                SingletonBehaviour<GameSave>.Instance.LoadCharacter(SingletonBehaviour<GameSave>.Instance.Saves.Count - 1);
-                this.LoadConnectMenu();
-            });
-        }
-        */
     }
 }

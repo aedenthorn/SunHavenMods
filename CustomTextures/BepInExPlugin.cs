@@ -15,7 +15,7 @@ using Wish;
 
 namespace CustomTextures
 {
-    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.5.0")]
+    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.5.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -38,7 +38,7 @@ namespace CustomTextures
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-            dumpNames = Config.Bind<bool>("General", "DumpNames", true, "Dump names to BepInEx\\plugins\\CustomTextures\\names.txt");
+            dumpNames = Config.Bind<bool>("General", "DumpNames", false, "Dump names to BepInEx\\plugins\\CustomTextures\\names.txt");
             //nexusID = Config.Bind<int>("General", "NexusID", 1, "Nexus mod ID for updates");
 
             var harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
