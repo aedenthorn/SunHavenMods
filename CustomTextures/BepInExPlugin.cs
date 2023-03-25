@@ -9,7 +9,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
@@ -18,7 +17,7 @@ using AnimationClip = Wish.AnimationClip;
 
 namespace CustomTextures
 {
-    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.6.0")]
+    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.6.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -249,10 +248,12 @@ namespace CustomTextures
         {
             if (oldSprite == null)
                 return null;
-            if (cachedSprites.TryGetValue(oldSprite.name, out Sprite newSprite))
-                return newSprite;
             var textureName = oldSprite.texture?.name;
-            if (textureName == null || !customTextureDict.TryGetValue(textureName, out string path))
+            if (textureName == null)
+                return oldSprite;
+            if (cachedSprites.TryGetValue(oldSprite.name + "_" + textureName, out Sprite newSprite))
+                return newSprite;
+            if (!customTextureDict.TryGetValue(textureName, out string path))
                 return oldSprite;
 
             Dbgl($"replacing sprite {oldSprite.texture.name}");
@@ -260,7 +261,7 @@ namespace CustomTextures
             newTex.name = oldSprite.texture.name;
             newSprite = Sprite.Create(newTex, oldSprite.rect, new Vector2(oldSprite.pivot.x / oldSprite.rect.width, oldSprite.pivot.y / oldSprite.rect.height), oldSprite.pixelsPerUnit, 0, SpriteMeshType.FullRect, oldSprite.border, true);
             newSprite.name = oldSprite.name;
-            cachedSprites.Add(newSprite.name, newSprite);
+            cachedSprites.Add(newSprite.name + "_" + textureName, newSprite);
             return newSprite;
         }
         private static Texture2D TryGetReplacementTexture(Texture2D oldTexture)
