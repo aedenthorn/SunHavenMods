@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,26 +12,29 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.SceneManagement;
 using Wish;
+using AnimationClip = Wish.AnimationClip;
 
 namespace CustomTextures
 {
-    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.5.1")]
+    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.6.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
-        public static ConfigEntry<bool> dumpNames;
+        public static ConfigEntry<KeyboardShortcut> reloadKey;
         //public static ConfigEntry<int> nexusID;
 
-        public static Dictionary<string, string> customTextureDict;
+        public static Dictionary<string, string> customTextureDict = new Dictionary<string, string>();
         public static Dictionary<string, Texture2D> cachedTextureDict = new Dictionary<string, Texture2D>();
+        public static Dictionary<string, Sprite> cachedSprites = new Dictionary<string, Sprite>();
         public static void Dbgl(string str = "", bool pref = true)
         {
             if (isDebug.Value)
-                Debug.Log((pref ? typeof(BepInExPlugin).Namespace + " " : "") + str);
+                context.Logger.LogInfo(str);
         }
         private void Awake()
         {
@@ -38,8 +42,7 @@ namespace CustomTextures
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-            dumpNames = Config.Bind<bool>("General", "DumpNames", false, "Dump names to BepInEx\\plugins\\CustomTextures\\names.txt");
-            //nexusID = Config.Bind<int>("General", "NexusID", 1, "Nexus mod ID for updates");
+            reloadKey = Config.Bind<KeyboardShortcut>("General", "ReloadKey", new KeyboardShortcut(KeyCode.F5), "Key to press to reload textures from disk");
 
             var harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
 
@@ -59,18 +62,40 @@ namespace CustomTextures
                     }
                 }
             }
+
+            SceneManager.sceneLoaded += SceneManager_sceneLoaded;
+
         }
 
-        private void LoadCustomTextures()
+        [HarmonyPatch(typeof(Player), "Update")]
+        static class Player_Update_Patch
         {
-            customTextureDict = new Dictionary<string, string>();
-            string path = AedenthornUtils.GetAssetPath(this, true);
+            static void Postfix()
+            {
+                if (!modEnabled.Value)
+                    return;
+
+                if (reloadKey.Value.IsDown())
+                {
+                    cachedTextureDict.Clear();
+                    LoadCustomTextures();
+                }
+            }
+        }
+        private static void LoadCustomTextures()
+        {
+            customTextureDict.Clear();
+            string path = AedenthornUtils.GetAssetPath(context, true);
             foreach(string file in Directory.GetFiles(path, "*.png", SearchOption.AllDirectories))
             {
                 customTextureDict.Add(Path.GetFileNameWithoutExtension(file), file);
             }
             Dbgl($"Loaded {customTextureDict.Count} textures");
-
+            if(DialogueController.Instance != null)
+            {
+                DialogueController.Instance.enabled = false;
+                DialogueController.Instance.enabled = true;
+            }
         }
         private static Texture2D GetTexture(string path)
         {
@@ -101,8 +126,102 @@ namespace CustomTextures
                     i++;
                 }
             }
-
             return codes.AsEnumerable();
+        }
+
+        private static void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
+        {
+            if (!modEnabled.Value)
+                return;
+            Stopwatch s = new Stopwatch();
+            Dbgl($"Replacing scene textures");
+            s.Start();
+            foreach (var c in FindObjectsOfType<Component>())
+            {
+                if(c is Renderer)
+                {
+                    foreach(var m in (c as Renderer).materials)
+                    {
+                        foreach(var n in m.GetTexturePropertyNames())
+                        if(m.HasProperty(n) && m.GetTexture(n) is Texture2D)
+                        {
+                            m.mainTexture = TryGetReplacementTexture((Texture2D)m.mainTexture);
+                        }
+                    }
+                }
+                else if (c is MonoBehaviour)
+                {
+                    FindSpritesInObject(c);
+                }
+            }
+            Dbgl($"Time to replace textures: {s.ElapsedMilliseconds}ms");
+        }
+
+        private static void FindSpritesInObject(object c)
+        {
+            foreach (var f in AccessTools.GetDeclaredFields(c.GetType()))
+            {
+                var fo = f.GetValue(c);
+                if (f.FieldType == typeof(Sprite))
+                {
+                    //Dbgl($"found Sprite {c.GetType().Name} {f.Name}");
+
+                    f.SetValue(c, TryGetReplacementSprite((Sprite)fo));
+                }
+                else if (f.FieldType == typeof(List<Sprite>))
+                {
+                    var field = (List<Sprite>)fo;
+                    if (field is null)
+                        continue;
+                    //Dbgl($"found List<Sprite> {c.GetType().Name} {f.Name}");
+                    for (int i = 0; i < field.Count; i++)
+                    {
+                        field[i] = TryGetReplacementSprite(field[i]);
+                    }
+                }
+                else if (f.FieldType == typeof(Sprite[]))
+                {
+                    var field = (Sprite[])fo;
+                    if (field is null)
+                        continue;
+                    //Dbgl($"found Sprite[] {c.GetType().Name} {f.Name}");
+                    for (int i = 0; i < field.Length; i++)
+                    {
+                        field[i] = TryGetReplacementSprite(field[i]);
+                    }
+                }
+                else if (f.FieldType == typeof(Dictionary<string, Sprite>))
+                {
+                    var field = (Dictionary<string, Sprite>)fo;
+                    if (field is null)
+                        continue;
+                    //Dbgl($"found Sprite[] {c.GetType().Name} {f.Name}");
+                    foreach(var k in field.Keys.ToArray())
+                    {
+                        field[k] = TryGetReplacementSprite(field[k]);
+                    }
+                }
+                else if (f.FieldType == typeof(Dictionary<string, List<Sprite>>))
+                {
+                    var field = (Dictionary<string, List<Sprite>>)fo;
+                    if (field is null)
+                        continue;
+                    //Dbgl($"found Sprite[] {c.GetType().Name} {f.Name}");
+                    foreach(var k in field.Keys.ToArray())
+                    {
+                        for (int i = 0; i < field[k].Count; i++)
+                        {
+                            field[k][i] = TryGetReplacementSprite(field[k][i]);
+                        }
+                    }
+                }
+                else if(fo != null && !(fo is Enum) && !(fo is MonoBehaviour) && f.FieldType.Namespace == "Wish")
+                {
+                    //Dbgl($"checking field {c.GetType().Name} {f.Name}");
+
+                    FindSpritesInObject(fo);
+                }
+            }
         }
 
         private static ClothingLayerSprites HandleResult(ClothingLayerSprites result)
@@ -117,83 +236,71 @@ namespace CustomTextures
                     continue;
                 for (int j = 0; j < result._clothingLayerInfo[i].sprites.Length; j++)
                 {
-                    var name = result._clothingLayerInfo[i].sprites[j]?.texture?.name;
-                    if (name is null)
+                    var textureName = result._clothingLayerInfo[i].sprites[j]?.texture?.name;
+                    if (textureName is null)
                         continue;
-                    if (customTextureDict.TryGetValue(name, out string path))
-                    {
-                        var oldSprite = result._clothingLayerInfo[i].sprites[j];
-                        Dbgl($"replacing sprite {result._clothingLayerInfo[i].clothingLayer} {name}");
-                        Sprite newSprite = Sprite.Create(GetTexture(path), oldSprite.rect, new Vector2(oldSprite.pivot.x / oldSprite.rect.width, oldSprite.pivot.y / oldSprite.rect.height), oldSprite.pixelsPerUnit, 0, SpriteMeshType.FullRect, oldSprite.border, true);
-                        newSprite.name = oldSprite.name;
-                        result._clothingLayerInfo[i].sprites[j] = newSprite;
-                    }
+                    result._clothingLayerInfo[i].sprites[j] = TryGetReplacementSprite(result._clothingLayerInfo[i].sprites[j]);
                 }
             }
             return result;
         }
 
-        [HarmonyPatch(typeof(CharacterClothingStyles), "SetupClothingStyleDictionary")]
-        static class CharacterClothingStyles_SetupClothingStyleDictionary_Patch
+        private static Sprite TryGetReplacementSprite(Sprite oldSprite)
         {
-            static void Prefix()
+            if (oldSprite == null)
+                return null;
+            if (cachedSprites.TryGetValue(oldSprite.name, out Sprite newSprite))
+                return newSprite;
+            var textureName = oldSprite.texture?.name;
+            if (textureName == null || !customTextureDict.TryGetValue(textureName, out string path))
+                return oldSprite;
+
+            Dbgl($"replacing sprite {oldSprite.texture.name}");
+            var newTex = GetTexture(path);
+            newTex.name = oldSprite.texture.name;
+            newSprite = Sprite.Create(newTex, oldSprite.rect, new Vector2(oldSprite.pivot.x / oldSprite.rect.width, oldSprite.pivot.y / oldSprite.rect.height), oldSprite.pixelsPerUnit, 0, SpriteMeshType.FullRect, oldSprite.border, true);
+            newSprite.name = oldSprite.name;
+            cachedSprites.Add(newSprite.name, newSprite);
+            return newSprite;
+        }
+        private static Texture2D TryGetReplacementTexture(Texture2D oldTexture)
+        {
+            var textureName = oldTexture?.name;
+            if (textureName == null || !customTextureDict.TryGetValue(textureName, out string path))
+                return oldTexture;
+
+            Dbgl($"replacing texture {oldTexture.name}");
+            var newTex = GetTexture(path);
+            newTex.name = oldTexture.name;
+            return newTex;
+        }
+        [HarmonyPatch(typeof(AnimationHandler), "Awake")]
+        static class AnimationHandler_Awake_Patch
+        {
+            static void Postfix(AnimationHandler __instance, Dictionary<string, AnimationClip> ____animationClips)
             {
-                if (!modEnabled.Value || !dumpNames.Value)
+                if (!modEnabled.Value)
                     return;
-                
-                Dbgl($"Setup clothing style dict");
 
-                string path = Path.Combine(AedenthornUtils.GetAssetPath(context, true), "names.txt");
-                File.WriteAllText(path, "");
-                
-                HashSet<string> names = new HashSet<string>();
-                var fi = AccessTools.Field(typeof(ClothingLayerData), "clothingLayerSprites");
-                var fi2 = AccessTools.Field(typeof(ClothingLayerData), "loadHandle");
-                for (int i = 0; i < CharacterClothingStyles.AllClothing.Length; i++)
+                foreach (var key in ____animationClips.Keys.ToArray())
                 {
-                    try
+                    for(int i = 0; i < ____animationClips[key].Frames.Count; i++)
                     {
-                        ClothingLayerData cld = CharacterClothingStyles.AllClothing[i];
-                        var loadHandle = Addressables.LoadAssetAsync<ClothingLayerSprites>((AssetReferenceClothingLayerSprites)fi.GetValue(cld));
-                        if (!loadHandle.IsValid() || loadHandle.Result == null)
-                        {
-                            fi2.SetValue(cld, loadHandle);
-                            List<string> newNames = new List<string>();
-                            loadHandle.Completed += delegate (AsyncOperationHandle<ClothingLayerSprites> x)
-                            {
-                                if (loadHandle.Result?._clothingLayerInfo != null)
-                                {
-                                    foreach (ClothingLayerInfo clothingLayerInfo in loadHandle.Result._clothingLayerInfo)
-                                    {
-                                        try
-                                        {
-                                            foreach (var s in clothingLayerInfo.sprites)
-                                            {
-                                                try
-                                                {
-                                                    if (names.Add(s.texture.name))
-                                                    {
-                                                        newNames.Add(s.texture.name);
-                                                    }
-                                                }
-                                                catch { }
-                                            }
-                                        }
-                                        catch { }
-                                    }
-                                }
-                                if (newNames.Any())
-                                {
-                                    Dbgl($"writing {newNames.Count} new names");
-                                    File.AppendAllLines(path, newNames);
-                                }
-                            };
-                        }
+                        ____animationClips[key].Frames[i] = TryGetReplacementSprite(____animationClips[key].Frames[i]);
                     }
-                    catch { }
                 }
+            }
+        }
 
-                dumpNames.Value = false;
+        [HarmonyPatch(typeof(MeshGenerator), nameof(MeshGenerator.GenerateMesh))]
+        static class MeshGenerator_GenerateMesh_Patch
+        {
+            static void Prefix(MeshGenerator __instance, Sprite ____prevSprite)
+            {
+                if (!modEnabled.Value || __instance.sprite == ____prevSprite)
+                    return;
+
+                __instance.sprite = TryGetReplacementSprite(__instance.sprite);
             }
         }
     }
