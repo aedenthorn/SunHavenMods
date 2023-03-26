@@ -15,7 +15,7 @@ using Wish;
 
 namespace CharacterEdit
 {
-    [BepInPlugin("aedenthorn.CharacterEdit", "Character Edit", "0.2.0")]
+    [BepInPlugin("aedenthorn.CharacterEdit", "Character Edit", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -86,7 +86,7 @@ namespace CharacterEdit
             int index = SingletonBehaviour<GameSave>.Instance.Saves.FindIndex(s => s.characterData == character);
             Dbgl($"fixing panel {index}");
             GameObject button = Instantiate(savePanel.deleteButton.gameObject, savePanel.deleteButton.transform.parent);
-            button.GetComponent<RectTransform>().anchoredPosition -= new Vector2(savePanel.deleteButton.gameObject.GetComponent<RectTransform>().rect.width, 0);
+            button.GetComponent<RectTransform>().anchoredPosition = new Vector2(-4, -39);
             button.GetComponent<Image>().sprite = buttonSprite;
             button.GetComponent<UnityEngine.UI.Button>().onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
             button.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(delegate ()
@@ -110,10 +110,34 @@ namespace CharacterEdit
                             MainMenuController.Instance.characterCreation.SetClothingLayerData(style, clothingLayer, false);
                         }
                     }
-                    foreach (ClothingLayer clothingLayer in (ClothingLayer[])Enum.GetValues(typeof(ClothingLayer)))
+
+                    foreach (KeyValuePair<ClothingLayer, ClothingLayerData> keyValuePair in currentClothingDictionary.ToList<KeyValuePair<ClothingLayer, ClothingLayerData>>())
                     {
-                        Dbgl($"After: {clothingLayer}: {MainMenuController.Instance.characterCreation.CurrentCharacter.styleData[(byte)clothingLayer]} {SingletonBehaviour<GameSave>.Instance.CurrentSave.characterData.styleData[(byte)clothingLayer]}");
+                        if (keyValuePair.Value.armorData != null)
+                        {
+                            ClothingLayer key = keyValuePair.Key;
+                            if (key <= ClothingLayer.Back)
+                            {
+                                if (key != ClothingLayer.FrontGloves && key != ClothingLayer.Back)
+                                {
+                                    continue;
+                                }
+                            }
+                            else if (key != ClothingLayer.Hat && key != ClothingLayer.Chest && key != ClothingLayer.Pants)
+                            {
+                                continue;
+                            }
+                            int vanityIndexByArmorType = PlayerInventory.GetVanityIndexByArmorType(keyValuePair.Value.armorData.armorType);
+                            MainMenuController.Instance.characterCreation.CurrentCharacter.Items[(short)vanityIndexByArmorType] = new InventoryItemData
+                            {
+                                Amount = 1,
+                                Item = keyValuePair.Value.armorData.GenerateArmorItem()
+                            };
+                            ClothingLayer clothingLayer = keyValuePair.Value.clothingLayers[0];
+                            MainMenuController.Instance.characterCreation.SetClothingLayerData(MainMenuController.Instance.characterCreation.defaultLayers[clothingLayer], clothingLayer, false);
+                        }
                     }
+                    
 
                     SingletonBehaviour<GameSave>.Instance.CurrentSave.characterData = MainMenuController.Instance.characterCreation.CurrentCharacter;
                     SingletonBehaviour<GameSave>.Instance.WriteCharacterToFile(false, false);
@@ -160,6 +184,21 @@ namespace CharacterEdit
                 {
                     currentClothingDictionary[clothingLayer] = style;
                     MainMenuController.Instance.characterCreation.SetClothingLayerData(style, clothingLayer, false);
+                }
+            }
+            foreach (ArmorType armorType in (ArmorType[])Enum.GetValues(typeof(ArmorType)))
+            {
+                int vanityIndexByArmorType = PlayerInventory.GetVanityIndexByArmorType(armorType);
+
+                if (MainMenuController.Instance.characterCreation.CurrentCharacter.Items[(short)vanityIndexByArmorType]?.Item is ArmorItem)
+                {
+                    ArmorData itemData = ItemDatabase.GetItemData<ArmorData>(MainMenuController.Instance.characterCreation.CurrentCharacter.Items[(short)vanityIndexByArmorType].Item);
+                    if (itemData.clothingLayerData is null)
+                        continue;
+                    foreach(var clothingLayer in itemData.clothingLayerData.clothingLayers)
+                    {
+                        MainMenuController.Instance.characterCreation.SetClothingLayerData(itemData.clothingLayerData, clothingLayer, false);
+                    }
                 }
             }
             AccessTools.Method(typeof(CharacterCreation), "UpdateStartingItems").Invoke(MainMenuController.Instance.characterCreation, new object[0]);
