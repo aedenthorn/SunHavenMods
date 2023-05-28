@@ -73,6 +73,11 @@
       <HintPath>$(ManagedDataPath)\Sirenix.Serialization.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="QFSW.QC">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ManagedDataPath)\QFSW.QC.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- Add Unity references -->

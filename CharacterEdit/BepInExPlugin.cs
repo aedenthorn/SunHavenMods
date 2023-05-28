@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using QFSW.QC;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine.UI;
 using Wish;
 
