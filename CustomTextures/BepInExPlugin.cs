@@ -81,6 +81,58 @@ namespace CustomTextures
                 }
             }
         }
+        
+        [HarmonyPatch(typeof(ItemDatabase), "ConstructDatabase", new []{ typeof(IList<ItemData>)})]
+        static class ItemDatabase_ConstructDatabase_Patch
+        {
+            static void Postfix()
+            {
+                if (!modEnabled.Value)
+                    return;
+
+                try
+                {
+                    foreach (var item in ItemDatabase.items)
+                    {
+                        if (!item)
+                        {
+                            continue;
+                        }
+
+                        item.icon = TryGetReplacementSprite(item.icon);
+
+                        if (!item.useItem || !(item.useItem is Placeable placeable)) continue;
+
+
+                        if (placeable._previewSprite)
+                        {
+                            placeable._previewSprite = TryGetReplacementSprite(placeable._previewSprite);
+                        }
+
+                        if (placeable._secondaryPreviewSprite)
+                        {
+                            placeable._secondaryPreviewSprite = TryGetReplacementSprite(placeable._secondaryPreviewSprite);
+                        }
+
+                        if (!placeable._decoration) continue;
+
+                        foreach (var childGenerator in placeable._decoration.GetComponentsInChildren<MeshGenerator>())
+                        {
+                            Dbgl(childGenerator.name);
+                            if (childGenerator && childGenerator.sprite)
+                            {
+                                childGenerator.sprite = TryGetReplacementSprite(childGenerator.sprite);
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    context.Logger.LogError(e);
+                }
+            }
+        }
+        
         private static void LoadCustomTextures()
         {
             customTextureDict.Clear();
