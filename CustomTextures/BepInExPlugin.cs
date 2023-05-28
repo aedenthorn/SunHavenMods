@@ -118,7 +118,6 @@ namespace CustomTextures
 
                         foreach (var childGenerator in placeable._decoration.GetComponentsInChildren<MeshGenerator>())
                         {
-                            Dbgl(childGenerator.name);
                             if (childGenerator && childGenerator.sprite)
                             {
                                 childGenerator.sprite = TryGetReplacementSprite(childGenerator.sprite);
