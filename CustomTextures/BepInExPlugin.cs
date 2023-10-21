@@ -63,7 +63,6 @@ namespace CustomTextures
             }
 
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
-
         }
 
         [HarmonyPatch(typeof(Player), "Update")]
@@ -82,7 +81,7 @@ namespace CustomTextures
             }
         }
         
-        [HarmonyPatch(typeof(ItemDatabase), "ConstructDatabase", new []{ typeof(IList<ItemData>)})]
+        [HarmonyPatch(typeof(ItemDatabase), "ConstructDatabase", new []{ typeof(ItemData[])})]
         static class ItemDatabase_ConstructDatabase_Patch
         {
             static void Postfix()
@@ -92,7 +91,7 @@ namespace CustomTextures
 
                 try
                 {
-                    foreach (var item in ItemDatabase.items)
+                    foreach (var item in ItemDatabase.itemDatas.Values)
                     {
                         if (!item)
                         {
