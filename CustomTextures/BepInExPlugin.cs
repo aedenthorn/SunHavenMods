@@ -17,7 +17,7 @@ using AnimationClip = Wish.AnimationClip;
 
 namespace CustomTextures
 {
-    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.8.0")]
+    [BepInPlugin("aedenthorn.CustomTextures", "Custom Textures", "0.8.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -195,7 +195,7 @@ namespace CustomTextures
                         foreach(var n in m.GetTexturePropertyNames())
                         if(m.HasProperty(n) && m.GetTexture(n) is Texture2D)
                         {
-                            m.mainTexture = TryGetReplacementTexture((Texture2D)m.mainTexture);
+                            m.SetTexture(n, TryGetReplacementTexture((Texture2D)m.GetTexture(n)));
                         }
                     }
                 }
